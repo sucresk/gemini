@@ -2,6 +2,8 @@ package gemini.component
 {
 	import flash.display.DisplayObject;
 	import flash.display.MovieClip;
+	import flash.events.Event;
+	import flash.events.MouseEvent;
 	import flash.text.TextField;
 	import gemini.data.FunctionObject;
 	import gemini.manager.FontsManager;
@@ -24,13 +26,19 @@ package gemini.component
 		private var _btnPrev:Button;
 		private var _btnNext:Button;
 		private var _renderHandler:Function;
+		private var _selectedHandler:Function;
 		private var _renderClass:Class;
 		private var _totalPage:int;
 		private var _txtPage:TextField;
+		private var _position:Number;
+		private var _selectedIndex:int = 0;
+		
+		private var _selectable:Boolean;
 		
 		public function BaseList(skin:*, renderClass:Class = null) 
 		{
 			super(skin);
+				
 			if (renderClass != null)
 			{
 				this.renderClass = renderClass;
@@ -58,7 +66,11 @@ package gemini.component
 				items.push(new _renderClass(item));
 			}
 			_numItems = items.length;
-			
+			if (_selectable)
+			{
+				_selectable = false;
+				selectable = true;
+			}
 			var btn:MovieClip = getChildMovieClipInstance("btnPrevPage");
 			if (btn != null)
 			{
@@ -87,6 +99,7 @@ package gemini.component
 			_txtPage = getChildTextFieldInstance("txtPage");
 			if(_txtPage != null)
 				FontsManager.setStrictSized(_txtPage);
+				
 			index = 0;
 		}
 		
@@ -119,9 +132,119 @@ package gemini.component
 		public function set length(v:int):void 
 		{
 			_length = v;
-			//totalPage = ((_length % _numItems) == 0 ? _length / _numItems : (_length / _numItems + 1));
 			_totalPage = Math.ceil(_length / _numItems);
 			refresh();
+		}
+		
+		public function get position():Number 
+		{
+			return _position;
+		}
+		
+		public function set position(value:Number):void 
+		{
+			_position = value;
+			if (_length > _numItems)
+			{
+				index = int(_position * (_length - _numItems));
+			}
+			else
+			{
+				index = 0;
+			}
+		}
+		
+		public function get selectable():Boolean 
+		{
+			return _selectable;
+		}
+		
+		public function set selectable(value:Boolean):void 
+		{
+			if (_selectable != value)
+			{
+				_selectable = value;
+				
+				for (var i:int = 0, len:int = items.length; i < len; i++)
+				{
+					if (_selectable)
+					{
+						items[i].addEventListener(MouseEvent.CLICK, clickHandler);
+					}
+					else
+					{
+						items[i].removeEventListener(MouseEvent.CLICK, clickHandler);
+					}
+				}
+			}
+			
+		}
+		
+		public function get selectedIndex():int 
+		{
+			return _selectedIndex;
+		}
+		
+		public function set selectedIndex(value:int):void 
+		{
+			if (_selectedIndex != value)
+			{
+				
+				if (_selectedIndex >= _curIndex && _selectedIndex < _curIndex + _numItems)
+				{
+					items[_selectedIndex - _curIndex]["selected"] = false;
+				}
+				_selectedIndex = value;
+				if (_selectedIndex >= _curIndex && _selectedIndex < _curIndex + _numItems)
+				{
+					items[_selectedIndex - _curIndex]["selected"] = true;
+				}
+				if (_selectedHandler != null)
+				{
+					_selectedHandler(_selectedIndex);
+				}
+			}
+			
+		}
+		
+		/**
+		 * 不触发回调
+		 * @param	value
+		 */
+		public function setIndex(value:int):void 
+		{
+			if (_selectedIndex != value)
+			{
+				if (_selectedIndex >= _curIndex && _selectedIndex < _curIndex + _numItems)
+				{
+					items[_selectedIndex - _curIndex]["selected"] = false;
+				}
+				_selectedIndex = value;
+				if (_selectedIndex >= _curIndex && _selectedIndex < _curIndex + _numItems)
+				{
+					items[_selectedIndex - _curIndex]["selected"] = true;
+				}
+			}
+			
+		}
+		
+		public function set selectedHandler(value:Function):void 
+		{
+			_selectedHandler = value;
+		}
+		
+		private function clickHandler(e:MouseEvent):void 
+		{
+			var target:BaseObject = e.currentTarget as BaseObject;
+			var index:int;
+			if (target)
+			{
+				index = items.indexOf(target);
+				if (index != -1)
+				{
+					selectedIndex = _curIndex + index;
+				}
+			}
 		}
 		
 		private function render(item:BaseObject, index:int):void {
@@ -145,6 +268,10 @@ package gemini.component
 			for (var i:int = 0; i < _numItems; i++)
 			{
 				render(items[i], _curIndex + i);
+				if (_selectable)
+				{
+					items[i]["selected"] = _selectedIndex == _curIndex + i;
+				}
 			}
 			if (_btnPrevPage != null) 
 			{
@@ -166,6 +293,15 @@ package gemini.component
 			{
 				_txtPage.text = _curPage + "/" + _totalPage;
 			}
+		}
+		
+		override public function destroy():void 
+		{
+			if (_selectable)
+			{
+				selectable = false;
+			}
+			super.destroy();
 		}
 	}
 

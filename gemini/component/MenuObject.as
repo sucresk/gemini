@@ -32,7 +32,7 @@ package gemini.component
 			{
 				buttonMode = true;
 				interactiveEnable = true;
-				addEventListener(MouseEvent.CLICK, showMenuHandler, false, 0, true);
+				addEventListener(MouseEvent.CLICK, showMenuHandler);
 			}	
 		}
 		
@@ -60,8 +60,9 @@ package gemini.component
 			if (_menu != null)
 			{
 				_menu.setData(_menuVars);
+				//trace("aaa ", x, y, this, localToGlobal(new Point()), this.localToGlobal(new Point()));
 				var globalPos:Point = this.localToGlobal(new Point());
-				_menu.setPosition(globalPos.x, globalPos.y, this.width, this.height);
+				_menu.setPosition(x, y, this.width, this.height);
 				e.stopPropagation();
 				if (stage != null)
 				{

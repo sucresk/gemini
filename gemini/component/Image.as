@@ -26,9 +26,12 @@ package gemini.component
 		private var _waitting:DisplayObject;
 		private var _bmp:Bitmap;
 		
-		public function Image(url:String = null, waitting:DisplayObject = null) 
+		public var offsetX:Number = 0;
+		public var offsetY:Number = 0;
+		
+		public function Image(content:* = null, url:String = null, waitting:DisplayObject = null) 
 		{
-			super();
+			super(content);
 			_waitting = waitting;
 			this.url = url;
 		}
@@ -73,11 +76,18 @@ package gemini.component
 			}
 		}
 		
+		public function set waitting(value:DisplayObject):void 
+		{
+			_waitting = value;
+		}
+		
 		private function setBitmap(bmpD:BitmapData):void
 		{
 			if (_bmp == null)
 				_bmp = new Bitmap();
 			_bmp.bitmapData = bmpD;
+			_bmp.x = offsetX;
+			_bmp.y = offsetY;
 			addChild(_bmp);
 		}
 		private function completedHandler(e:Event):void
@@ -109,7 +119,7 @@ package gemini.component
 		
 		private function setScale(maxWidth:int, maxHeight:int):void
 		{
-			var scale:Number = Math.min(_maxHeight / height, _maxWidth / width);
+			var scale:Number = Math.min(_maxHeight / height * scaleY, _maxWidth / width * scaleX);
 			scaleX = scaleY = scale;
 		}
 		

@@ -37,6 +37,7 @@ package gemini.component
 		private var _tooltip:IToolTip;
 		private var _tickEnable:Boolean;
 		private var _interactiveEnable:Boolean = true;
+		protected var _userData:Object;
 		
 		public function BaseObject(content:* = null,intercative:Boolean = true, autoBuild:Boolean = false, buildLayer:int = 1) 
 		{
@@ -59,6 +60,17 @@ package gemini.component
 		{
 			removeEventListener(Event.ADDED_TO_STAGE, addToStageHandler);
 			init();
+		}
+		
+		public function replaceSkin(skin:*):void
+		{
+			if (content)
+			{
+				destroy();
+				removeChild(content)
+				content = null;
+			}
+			setSkin(skin);	
 		}
 		
 		protected function init():void
@@ -88,7 +100,7 @@ package gemini.component
 					skin.y = 0;
 				}
 				this.content = skin;
-				if (content is MovieClip)
+				if(content is MovieClip)
 					MovieClip(content).stop();
 				addChild(this.content);
 			}
@@ -161,6 +173,23 @@ package gemini.component
 		
 		public function destroy():void
 		{
+			if (content)
+			{
+				for (var i:int = 0, len:int = content.numChildren; i < len; i++)
+				{
+					if (content.getChildAt(i) is BaseObject)
+					{
+						BaseObject(content.getChildAt(i)).destroy();
+					}
+				}
+			}
+			for (i = 0, len = newObjects.length; i < len; i++)
+			{
+				if (newObjects[i] is BaseObject)
+				{
+					BaseObject(newObjects[i]).destroy();
+				}
+			}
 			if(_tooltip != null)
 				setTip(null);
 		}
@@ -427,50 +456,16 @@ package gemini.component
 		{
 			scaleX = scaleY = v;
 		}
-		//private static function buttonDownListener(e:MouseEvent):void{
-            //var btn:MovieClip = MovieClip(e.currentTarget);
-            //btn.gotoAndStop(("down" + btn["buttonSequence"]));
-        //}
-        //private static function buttonUpListener(e:MouseEvent):void{
-            //var btn:MovieClip = MovieClip(e.currentTarget);
-            //btn.gotoAndStop(("over" + btn["buttonSequence"]));
-        //}
-        //private static function buttonOutListener(e:MouseEvent):void{
-            //var btn:MovieClip = MovieClip(e.currentTarget);
-            //btn.gotoAndStop(("up" + btn["buttonSequence"]));
-        //}
-        //private static function buttonOverListener(e:MouseEvent):void{
-            //var btn:MovieClip = MovieClip(e.currentTarget);
-            //btn.gotoAndStop(("over" + btn["buttonSequence"]));
-        //}
-        //public static function setButtonSequence(btn:MovieClip, labelSuffix:String):void{
-            //btn["buttonSequence"] = labelSuffix;
-        //}
-		//public static function setButtonMode(btn:MovieClip, mode:Boolean, labelSuffix:String=""):void{
-            //if (btn != null){
-                //setButtonSequence(btn, labelSuffix);
-                //btn.gotoAndStop(("up" + btn["buttonSequence"]));
-                //if (mode){
-                    //btn.buttonMode = true;
-                    //btn.addEventListener(MouseEvent.MOUSE_UP, buttonUpListener, false, 0, true);
-                    //btn.addEventListener(MouseEvent.MOUSE_DOWN, buttonDownListener, false, 0, true);
-                    //btn.addEventListener(MouseEvent.ROLL_OVER, buttonOverListener, false, 0, true);
-                    //btn.addEventListener(MouseEvent.ROLL_OUT, buttonOutListener, false, 0, true);
-                    //btn.addEventListener(MouseEvent.MOUSE_OVER, buttonOverListener, false, 0, true);
-                    //btn.addEventListener(MouseEvent.MOUSE_OUT, buttonOutListener, false, 0, true);
-                //} else {
-                    //btn.buttonMode = false;
-                    //btn.removeEventListener(MouseEvent.MOUSE_UP, buttonUpListener);
-                    //btn.removeEventListener(MouseEvent.MOUSE_DOWN, buttonDownListener);
-                    //btn.removeEventListener(MouseEvent.ROLL_OVER, buttonOverListener);
-                    //btn.removeEventListener(MouseEvent.ROLL_OUT, buttonOutListener);
-                    //btn.removeEventListener(MouseEvent.MOUSE_OVER, buttonOverListener);
-                    //btn.removeEventListener(MouseEvent.MOUSE_OUT, buttonOutListener);
-                    //btn.removeEventListener(MouseEvent.MOUSE_OUT, buttonOutListener);
-                    //setButtonSequence(btn, null);
-                //};
-            //};
-        //}
+		
+		public function get userData():Object 
+		{
+			return _userData;
+		}
+		
+		public function set userData(value:Object):void 
+		{
+			_userData = value;
+		}
 		
 	}
 

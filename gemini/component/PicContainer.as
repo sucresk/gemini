@@ -20,9 +20,25 @@ package gemini.component
 		private static var _cacheBitmaps:Object = new Object();
 		private static var _cacheNum:int = 0;
 		
+		//大小不超过背景
+		public var fitToBg:Boolean = false;
+		/**
+		 * true,最小scale对齐，不超过边界，false最大scale对齐，超过边界
+		 */
+		public var fitToMin:Boolean = true;
+		public var keepScale:Boolean = false;
+		public var cacheToBmp:Boolean = true;
+		
 		private var _picContainer:Sprite;
 		private var _url:String;
 		private var _gap:int = 5;
+		
+		private var _offsetX:Number = 0;
+		private var _offsetY:Number = 0;
+		private var _loader:Loader;
+		private var _loading:Boolean;
+		private var _changeUrl:String;
+		
 		
 		public function PicContainer(skin:*) 
 		{
@@ -38,23 +54,63 @@ package gemini.component
 		
 		public function set url(v:String):void
 		{
-			clearPicContainer();
-			if (v == null)
+			if (_loading)
+			{
+				_changeUrl = v;
 				return;
-			_url = v;
-			if (_cacheBitmaps[_url] != null)
-			{
-				addBitmap(_cacheBitmaps[_url]);
 			}
-			else
+			if (_url != v)
 			{
-				var loader:Loader = new Loader();
-				loader.contentLoaderInfo.addEventListener(Event.COMPLETE, loadedCompletedHandler);
-				loader.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR, errorHandler);
-				loader.load(new URLRequest(_url));
-				
+				clearPicContainer();
+				_url = v;
+				if (v == null)
+					return;
+				if (_cacheBitmaps[_url] != null)
+				{
+					addBitmap(_cacheBitmaps[_url]);
+				}
+				else
+				{
+					//if (_loading)
+					//{
+						//_loader.unload();
+						//_loader.contentLoaderInfo.removeEventListener(Event.COMPLETE, loadedCompletedHandler);
+						//_loader.contentLoaderInfo.removeEventListener(IOErrorEvent.IO_ERROR, errorHandler);
+						//_loader = null;
+					//}
+					
+					if (_loader == null)
+					{
+						_loader = new Loader();
+					}
+					_loader.contentLoaderInfo.addEventListener(Event.COMPLETE, loadedCompletedHandler);
+					_loader.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR, errorHandler);
+					_loader.load(new URLRequest(_url));
+					
+					_loading = true;
+				}
 			}
 			
+		}
+		
+		public function get offsetX():Number 
+		{
+			return _offsetX;
+		}
+		
+		public function set offsetX(value:Number):void 
+		{
+			_offsetX = value;
+		}
+		
+		public function get offsetY():Number 
+		{
+			return _offsetY;
+		}
+		
+		public function set offsetY(value:Number):void 
+		{
+			_offsetY = value;
 		}
 		
 		private function errorHandler(e:IOErrorEvent):void 
@@ -65,25 +121,31 @@ package gemini.component
 		private function loadedCompletedHandler(e:Event):void 
 		{
 			
-			var loader:Loader = Loader(e.target.loader);
 			try 
 			{
-				var bitmapData:BitmapData = new BitmapData(loader.width, loader.height);
-				bitmapData.draw(loader.content);
+				var bitmapData:BitmapData = new BitmapData(_loader.width, _loader.height,true,0);
+				bitmapData.draw(_loader.content);
 				addBitmap(bitmapData);
-				if (_cacheNum < MAX_CACHE)
+				if (cacheToBmp && _cacheNum < MAX_CACHE)
 				{
 					_cacheBitmaps[_url] = bitmapData;
 					_cacheNum++;
 				}
-				
+				_loader.unload();
+				_loader.contentLoaderInfo.removeEventListener(Event.COMPLETE, loadedCompletedHandler);
+				_loader.contentLoaderInfo.removeEventListener(IOErrorEvent.IO_ERROR, errorHandler);
+				//_loader = null;
 			}
 			catch (e:Error)
 			{
-				//_picContainer.addChild(loader);
-				addLoader(loader);
+				addLoader(_loader);
 			}
-			
+			_loading = false;
+			if (_changeUrl != null && _changeUrl != _url)
+			{
+				url = _changeUrl;
+			}
+			_changeUrl = null;
 		}
 		
 		private function addBitmap(bitmapData:BitmapData):void
@@ -94,24 +156,42 @@ package gemini.component
 			alignToCenter();
 		}
 		
+		public function addBmp(bmp:Bitmap):void
+		{
+			clearPicContainer();
+			_picContainer.addChild(bmp);
+			alignToCenter();
+		}
 		public function addSimpleIcon(icon:BaseObject):void
 		{
 			clearPicContainer();
 			_picContainer.addChild(icon);
+			alignToCenter();
 		}
 		
 		private function addLoader(loader:Loader):void
 		{
 			clearPicContainer();
 			_picContainer.addChild(loader);
-			alignToCenter()
+			alignToCenter();
 		}
 		
 		private function alignToCenter():void
 		{
-			scaleTo(_picContainer, content.width - _gap, content.height - _gap);
-			_picContainer.x = (content.width - _picContainer.width) * 0.5;
-			_picContainer.y = (content.height - _picContainer.height) * 0.5;
+			if (fitToBg)
+			{
+				if (keepScale)
+				{
+					scaleTo(_picContainer, content.width - _gap, content.height - _gap);
+				}
+				else
+				{
+					_picContainer.width = content.width - _gap;
+					_picContainer.height = content.height - _gap;
+				}
+			}
+			_picContainer.x = (content.width - _picContainer.width) * 0.5 + _offsetX;
+			_picContainer.y = (content.height - _picContainer.height) * 0.5 + _offsetY;
 		}
 		
 		public function clear():void
@@ -130,7 +210,7 @@ package gemini.component
 		
 		private function scaleTo(target:DisplayObject, strictWidth:int, strictHeight:int):void
 		{
-			if (target.width < strictWidth && target.height < strictHeight)
+			if (!fitToMin)
 			{
 				scaleMin(target, strictWidth, strictHeight);
 			}
@@ -142,13 +222,13 @@ package gemini.component
 		
 		private function scaleMax(target:DisplayObject, maxWidth:int, maxHeight:int):void
 		{
-			var scaleRateA:Number;
-			var scaleRateB:Number;
-			if (target.width > maxWidth)
+			var scaleRateA:Number = 1;
+			var scaleRateB:Number = 1;
+			//if (target.width > maxWidth)
 			{
 				scaleRateA =  maxWidth / target.width;
 			}
-			if (target.height > maxHeight)
+			//if (target.height > maxHeight)
 			{
 				scaleRateB = maxHeight / target.height;
 			}
@@ -157,17 +237,29 @@ package gemini.component
 		
 		private function scaleMin(target:DisplayObject, minWidth:int, minHeight:int):void
 		{
-			var scaleRateA:Number;
-			var scaleRateB:Number;
-			if (target.width < minWidth)
+			var scaleRateA:Number = 0;
+			var scaleRateB:Number = 0;
+			//if (target.width < minWidth)
 			{
 				scaleRateA = minWidth /  target.width;
 			}
-			if (target.height < minHeight)
+			//if (target.height < minHeight)
 			{
 				scaleRateB = minHeight / target.height;
 			}
 			target.scaleX = target.scaleY = (scaleRateA >= scaleRateB ? scaleRateA : scaleRateB);
+		}
+		
+		override public function destroy():void 
+		{
+			if (_loader)
+			{
+				_loader.unload();
+				_loader.contentLoaderInfo.removeEventListener(Event.COMPLETE, loadedCompletedHandler);
+				_loader.contentLoaderInfo.removeEventListener(IOErrorEvent.IO_ERROR, errorHandler);
+				_loader = null;
+			}
+			super.destroy();
 		}
 		
 	}

@@ -54,14 +54,39 @@ package gemini.component
 		
 		public function set index(v:int):void
 		{
-			if (_selected >= 0)
+			if (_selected != v)
 			{
-				_btnArr[_selected].selected = false;
+				if (_selected >= 0)
+				{
+					_btnArr[_selected].selected = false;
+					_btnArr[_selected].interactiveEnable = true;
+				}
+				_selected = v;
+				_btnArr[_selected].selected = true;
+				_btnArr[_selected].interactiveEnable = false;
+				if (_selectedHandler != null)
+					_selectedHandler(_selected);
 			}
-			_selected = v;
-			_btnArr[_selected].selected = true;
-			if (_selectedHandler != null)
-				_selectedHandler(_selected);
+			
+		}
+		
+		/**
+		 * 不触发回调
+		 */
+		public function set selectedIndex(v:int):void
+		{
+			if (_selected != v)
+			{
+				if (_selected >= 0)
+				{
+					_btnArr[_selected].selected = false;
+					_btnArr[_selected].interactiveEnable = true;
+				}
+				_selected = v;
+				_btnArr[_selected].selected = true;
+				_btnArr[_selected].interactiveEnable = false;
+			}
+			
 		}
 		
 		public function get index():int

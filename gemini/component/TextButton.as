@@ -27,6 +27,10 @@ package gemini.component
 		{
 			txtLabel.text = v;
 		}
+		public function get label():String
+		{
+			return txtLabel.text;
+		}
 	}
 
 }

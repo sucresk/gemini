@@ -1,6 +1,5 @@
 package gemini.component 
 {
-	import com.greensock.TweenLite;
 	import flash.display.DisplayObject;
 	import flash.display.MovieClip;
 	import flash.text.TextField;
@@ -8,7 +7,7 @@ package gemini.component
 	 * ...
 	 * @author sucre
 	 */
-	public class ScaleBar
+	public class ScaleBar extends BaseObject
 	{
 		/**
 		 * 这个类实现了条形进度条
@@ -21,6 +20,8 @@ package gemini.component
 		
 		public function ScaleBar(skin:MovieClip) 
 		{
+			super(skin);
+			_skin = content as MovieClip;
 			_skin = skin;
 			_bar = _skin["bar"];
 			_txtDesc = _skin["txtDesc"];
@@ -31,15 +32,13 @@ package gemini.component
 			if (v < 0) v = 0;
 			_value = v;
 			if (_bar != null) {
-				//_bar.scaleX = _value / _total;
-				TweenLite.to(_bar, 0.5, {scaleX:_value / _total} );
+				_bar.scaleX = _value / _total;
 			}
 			else {
 				_skin.gotoAndStop(int(_skin.totalFrames * _value / _total));
 			}
 			if (_txtDesc != null) {
 				_txtDesc.text = _value.toString();
-				//TweenLite.to(_txtDesc, 0.5, {text:int(_value)} );
 			}
 		}
 		

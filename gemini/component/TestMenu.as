@@ -1,6 +1,5 @@
-package com.kunlun.kungfu.view.components 
+package gemini.component 
 {
-	import com.kunlun.kungfu.App;
 	import flash.display.MovieClip;
 	import flash.events.MouseEvent;
 	import flash.geom.Point;
@@ -8,7 +7,7 @@ package com.kunlun.kungfu.view.components
 	 * ...
 	 * @author ...
 	 */
-	public class TestMenu extends CoreObject implements IMenu
+	public class TestMenu extends BaseObject implements IMenu
 	{
 		
 		private static var _instance:TestMenu;

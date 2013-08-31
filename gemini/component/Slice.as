@@ -13,22 +13,35 @@ package gemini.component
 		
 		public function Slice(arr:Array) 
 		{
-			_items = new Vector.<DisplayObject>(arr);
-			for (var i:int = 0, length:int = _items.length; i < length; i++)
+			
+			_items = new Vector.<DisplayObject>();
+			var i:int;
+			var len:int;
+			for (i = 0, len = arr.length; i < len; i++)
+			{
+				if (arr[i] is DisplayObject)
+				{
+					_items.push(arr[i]);
+				}
+			}
+			for (i = 1, len = _items.length; i < len; i++)
 			{
 				_items[i].visible = false;
 			}
-			show(_curIndex);
 		}
 		
 		public function set index(v:int):void
 		{
 			if (v != _curIndex)
 			{
-				_curIndex = v;
-				show(_curIndex);
+				show(v);
 			}
 			
+		}
+		
+		public function get index():int
+		{
+			return _curIndex;
 		}
 		
 		public function set visible(v:Boolean):void
